@@ -9,7 +9,11 @@
     "start": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["workspace", "management", "cli"],
+  "keywords": [
+    "workspace",
+    "management",
+    "cli"
+  ],
   "author": "Bakh",
   "license": "ISC",
   "description": "A simple workspace management tool",
@@ -17,5 +21,9 @@
     "@types/node": "^22.13.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "inquirer": "^12.5.0"
   }
 }
