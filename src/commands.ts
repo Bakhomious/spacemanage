@@ -4,14 +4,11 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import { spawn } from "child_process";
 
-import {RUN, CLEAN, EXCEPT, SHELL} from './constants';
 import { findWorkspaceRootConfigFile, getWorkspaceConfigPath } from "./utils";
-import { DirectoryConfig, DirectoryTypeChoices, WorkspaceConfig } from "./types";
-import { inherits } from "util";
-import { text } from "stream/consumers";
+import { DirectoryConfig, DirectoryTypeChoices, RunMode, WorkspaceConfig } from "./types";
+import { CLEAN, RUN, USAGE } from "./constants";
 
-export async function initWorkspace(dirPath: string | null): Promise<void> {
-  dirPath = dirPath ?? ".";
+export async function initWorkspace(dirPath: string): Promise<void> {
   const absloutePath = path.resolve(dirPath);
   if (!fs.existsSync(absloutePath)) {
     console.error(chalk.red(`ERROR: Directory not found: ${absloutePath}`));
@@ -112,16 +109,24 @@ function executeCommand(command: string, label: string): void {
   });
 }
 
-export function runWorkspace(dirPath: string | null, mode: string): void {
+export function runWorkspace(dirPath: string, mode: RunMode): void {
   try {
-    const resolvedPath: string = dirPath ?? process.cwd();
-    const directoryName: string = path.basename(resolvedPath);
-    const workspaceConfig: string = findWorkspaceRootConfigFile(resolvedPath);
+    const directoryName: string = path.basename(dirPath);
+    const workspaceConfig: string = findWorkspaceRootConfigFile(dirPath);
     const config: DirectoryConfig = JSON
       .parse(fs.readFileSync(workspaceConfig, "utf-8"))
       .directories[directoryName];
     
-    executeCommand(config.command, mode);
+    switch (mode) {
+      case RUN:
+        executeCommand(config.command, RUN);
+        break;
+      case CLEAN:
+        executeCommand(config.cleanCommand, CLEAN);
+      default:
+        console.error(chalk.red(`Unexpected mode: ${mode}`));
+        console.log(USAGE);
+    }
   } catch (error) {
     if(error instanceof Error) {
       console.error(chalk.red(error.message));
