@@ -3,13 +3,24 @@ export enum FolderType {
   BACKEND = "be"
 }
 
-export type FolderConfig = {
-  dirPath: string;
+export const DirectoryTypeChoices = [
+  {
+    name: "Frontend",
+    value: FolderType.FRONTEND
+  },
+  {
+    name: "Backend",
+    value: FolderType.BACKEND
+  }
+];
+
+export type DirectoryConfig = {
   command: string;
+  cleanCommand: string;
   type: FolderType;
 }
 
 export type WorkspaceConfig = {
-  workspace: string,
-  folders: Record<string, FolderConfig>;
+  dirPath: string,
+  directories: Record<string, DirectoryConfig>;
 }
