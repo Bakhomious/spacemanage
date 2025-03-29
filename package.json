@@ -1,0 +1,21 @@
+{
+  "name": "spacemanage",
+  "version": "1.0.0",
+  "bin": {
+    "spacemanage": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["workspace", "management", "cli"],
+  "author": "Bakh",
+  "license": "ISC",
+  "description": "A simple workspace management tool",
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}
