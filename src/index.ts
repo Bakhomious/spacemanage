@@ -35,14 +35,13 @@ if (command === INIT) {
       console.error(chalk.red(`${error}`));
     }
   });
-  process.exit(0);
+} else {
+  if (modes.length === 0) {
+    console.log(USAGE);
+    process.exit(1);
+  }
+  
+  modes.forEach((mode) => {
+    runWorkspaceWithSkip(dirPath, skippedDirectories, mode as RunMode);
+  });
 }
-
-if (modes.length === 0) {
-  console.log(USAGE);
-  process.exit(1);
-}
-
-modes.forEach((mode) => {
-  runWorkspaceWithSkip(dirPath, skippedDirectories, mode as RunMode);
-});

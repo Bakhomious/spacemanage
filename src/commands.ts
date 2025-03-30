@@ -31,6 +31,7 @@ export async function initWorkspace(dirPath: string): Promise<void> {
   }
 
   console.log(chalk.blue(`Initializing workspace at ${absloutePath}`));
+  console.log(chalk.black(`Config file: ${configFile}`));
 
   const subDirectories: Array<string> = fs
     .readdirSync(absloutePath)
@@ -86,6 +87,7 @@ export async function initWorkspace(dirPath: string): Promise<void> {
 
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
   console.log(chalk.green(`Initialized workspace at: ${absloutePath}`));
+  process.exit(0);
 }
 
 function executeCommand(command: string, label: string): void {
