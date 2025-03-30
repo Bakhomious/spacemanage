@@ -2,33 +2,40 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import inquirer from "inquirer";
-import { spawn } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 
 import { findWorkspaceRootConfigFile, getWorkspaceConfigPath } from "./utils";
-import { DirectoryConfig, DirectoryTypeChoices, RunMode, WorkspaceConfig } from "./types";
+import {
+  DirectoryConfig,
+  DirectoryTypeChoices,
+  RunMode,
+  WorkspaceConfig,
+} from "./types";
 import { CLEAN, RUN, USAGE } from "./constants";
 
 export async function initWorkspace(dirPath: string): Promise<void> {
-  const absloutePath = path.resolve(dirPath);
+  const absloutePath: string = path.resolve(dirPath);
   if (!fs.existsSync(absloutePath)) {
     console.error(chalk.red(`ERROR: Directory not found: ${absloutePath}`));
     process.exit(1);
   }
 
-  const configFile = getWorkspaceConfigPath(dirPath);
+  const configFile: string = getWorkspaceConfigPath(dirPath);
 
-  if(fs.existsSync(configFile)) {
+  if (fs.existsSync(configFile)) {
     console.info(chalk.yellow(`Workspace already exists at ${absloutePath}`));
-    console.info(chalk.blue(`Use: "spacemanage edit" to modify the configuration instead.`));
+    console.info(
+      chalk.blue(`Use: "spacemanage edit" to modify the configuration instead.`)
+    );
     process.exit(1);
   }
 
   console.log(chalk.blue(`Initializing workspace at ${absloutePath}`));
 
-  const subDirectories = fs
+  const subDirectories: Array<string> = fs
     .readdirSync(absloutePath)
     .filter((f) => fs.statSync(path.join(absloutePath, f)).isDirectory());
-  
+
   const selectedDirectories = await inquirer.prompt([
     {
       name: "directories",
@@ -41,7 +48,7 @@ export async function initWorkspace(dirPath: string): Promise<void> {
     },
   ]);
 
-  const directoryConfigs: Record<string, DirectoryConfig> = { };
+  const directoryConfigs: Record<string, DirectoryConfig> = {};
 
   for (const directory of selectedDirectories.directories) {
     const { type, command, cleanCommand } = await inquirer.prompt([
@@ -62,7 +69,7 @@ export async function initWorkspace(dirPath: string): Promise<void> {
         name: "cleanCommand",
         message: `Enter the clean installing command to run for the directory "${directory}"`,
         default: "",
-      }
+      },
     ]);
 
     directoryConfigs[directory] = {
@@ -83,18 +90,22 @@ export async function initWorkspace(dirPath: string): Promise<void> {
 
 function executeCommand(command: string, label: string): void {
   console.log(chalk.blue(`Running ${label} command...`));
-  const commandParts = command.split(" ");
-  const cmd = spawn(commandParts[0], commandParts.slice(1), {
+  const commandParts: Array<string> = command.split(" ");
+  const cmd: ChildProcess = spawn(commandParts[0], commandParts.slice(1), {
     stdio: "inherit",
     detached: false,
   });
 
   cmd.on("error", (err) => {
-    console.error(chalk.red(`Error executing ${label} command: ${err.message}`));
+    console.error(
+      chalk.red(`Error executing ${label} command: ${err.message}`)
+    );
   });
 
   cmd.on("exit", (code) => {
-    console.log(chalk.green(`${label} command completed with exit code ${code}`));
+    console.log(
+      chalk.green(`${label} command completed with exit code ${code}`)
+    );
     process.exit(code ?? 1);
   });
 
@@ -109,26 +120,41 @@ function executeCommand(command: string, label: string): void {
   });
 }
 
+export function runWorkspaceWithSkip(
+  dirPath: string,
+  skippedDirectories: Set<string>,
+  mode: RunMode
+): void {
+  const directoryName: string = path.basename(dirPath);
+  if (skippedDirectories.has(directoryName)) {
+    console.warn(`Skipping directory ${dirPath} as specified.`);
+    process.exit(0);
+  } else {
+    runWorkspace(dirPath, mode);
+  }
+}
+
 export function runWorkspace(dirPath: string, mode: RunMode): void {
   try {
     const directoryName: string = path.basename(dirPath);
     const workspaceConfig: string = findWorkspaceRootConfigFile(dirPath);
-    const config: DirectoryConfig = JSON
-      .parse(fs.readFileSync(workspaceConfig, "utf-8"))
-      .directories[directoryName];
-    
+    const config: DirectoryConfig = JSON.parse(
+      fs.readFileSync(workspaceConfig, "utf-8")
+    ).directories[directoryName];
+
     switch (mode) {
       case RUN:
         executeCommand(config.command, RUN);
         break;
       case CLEAN:
         executeCommand(config.cleanCommand, CLEAN);
+        break;
       default:
         console.error(chalk.red(`Unexpected mode: ${mode}`));
         console.log(USAGE);
     }
   } catch (error) {
-    if(error instanceof Error) {
+    if (error instanceof Error) {
       console.error(chalk.red(error.message));
       process.exit(1);
     }

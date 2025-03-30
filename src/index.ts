@@ -1,40 +1,48 @@
 #!/usr/bin/env node
-import path from 'path';
-import process from 'process';
-import { USAGE, INIT, RUN, CLEAN } from './constants'
-import { initWorkspace, runWorkspace } from './commands';
-import { checkConfigDir, handleExit, normalizePath } from './utils';
-import chalk from 'chalk';
+import process from "process";
+import chalk from "chalk";
+
+import { USAGE, INIT, SKIP } from "./constants";
+import { initWorkspace, runWorkspaceWithSkip } from "./commands";
+import {
+  checkConfigDir,
+  determineModes,
+  getDirectoryPathFromFlag,
+  getSkippedDirectories,
+  handleExit,
+} from "./utils";
+import { RunMode } from "./types";
 
 checkConfigDir();
 
 const args: string[] = process.argv.slice(2);
 const command: string = args[0];
 
-let dirPath:string = process.cwd();
+const dirPath: string = getDirectoryPathFromFlag(args);
+const modes: Array<string> = determineModes(args);
+const skippedDirectories: Set<string> = modes.includes(SKIP)
+  ? getSkippedDirectories(args)
+  : new Set<string>();
 
-const dirIndex = args.indexOf("-d");
-if(dirIndex !== -1 && dirIndex + 1 < args.length) {
-  dirPath = args[dirIndex + 1];
+if (command === INIT) {
+  if (modes.length > 0) {
+    console.warn(chalk.yellow(`Skipping modes: ${modes}`));
+  }
+  initWorkspace(dirPath).catch((error) => {
+    if (error.name === "ExitPromptError") {
+      handleExit();
+    } else {
+      console.error(chalk.red(`${error}`));
+    }
+  });
+  process.exit(0);
 }
 
-switch(command) {
-  case INIT:
-    initWorkspace(dirPath).catch((error) => {
-      if(error.name === 'ExitPromptError') {
-        handleExit();
-      } else {
-        console.error(chalk.red(`${error}`));
-      }
-    });
-    break;
-  case RUN:
-    runWorkspace(dirPath, RUN);
-    break;
-  case CLEAN:
-    runWorkspace(dirPath, CLEAN);
-    break;
-  default:
-    console.log(USAGE);
-    process.exit(1);
+if (modes.length === 0) {
+  console.log(USAGE);
+  process.exit(1);
 }
+
+modes.forEach((mode) => {
+  runWorkspaceWithSkip(dirPath, skippedDirectories, mode as RunMode);
+});

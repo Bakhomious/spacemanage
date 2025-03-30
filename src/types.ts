@@ -1,32 +1,34 @@
-import { RUN, CLEAN } from "./constants"
+import { RUN, CLEAN, SKIP } from "./constants";
 
 export enum FolderType {
   FRONTEND = "fe",
-  BACKEND = "be"
+  BACKEND = "be",
 }
 
 export const DirectoryTypeChoices = [
   {
     name: "Frontend",
-    value: FolderType.FRONTEND
+    value: FolderType.FRONTEND,
   },
   {
     name: "Backend",
-    value: FolderType.BACKEND
-  }
+    value: FolderType.BACKEND,
+  },
 ];
 
 export type DirectoryConfig = {
   command: string;
   cleanCommand: string;
   type: FolderType;
-}
+};
 
 export type WorkspaceConfig = {
-  dirPath: string,
+  dirPath: string;
   directories: Record<string, DirectoryConfig>;
-}
+};
 
-const VALID_RUN_MODES = [RUN, CLEAN] as const;
+const VALID_RUN_MODES = [RUN, CLEAN, SKIP] as const;
 
 export type RunMode = (typeof VALID_RUN_MODES)[number];
+
+export const modePriority:Array<string> = [SKIP, CLEAN, RUN];
