@@ -4,14 +4,17 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import { ChildProcess, spawn } from "child_process";
 
-import { findWorkspaceRootConfigFile, getWorkspaceConfigPath } from "./utils";
+import {
+  findWorkspaceRootConfigFile,
+  getWorkspaceConfigPath,
+} from "./utils.js";
 import {
   DirectoryConfig,
   DirectoryTypeChoices,
   RunMode,
   WorkspaceConfig,
-} from "./types";
-import { CLEAN, RUN, USAGE } from "./constants";
+} from "./types.js";
+import { CLEAN, RUN, USAGE } from "./constants.js";
 
 export async function initWorkspace(dirPath: string): Promise<void> {
   const absloutePath: string = path.resolve(dirPath);
@@ -90,53 +93,79 @@ export async function initWorkspace(dirPath: string): Promise<void> {
   process.exit(0);
 }
 
-function executeCommand(command: string, label: string): void {
-  console.log(chalk.blue(`Running ${label} command...`));
-  const commandParts: Array<string> = command.split(" ");
-  const cmd: ChildProcess = spawn(commandParts[0], commandParts.slice(1), {
-    stdio: "inherit",
-    detached: false,
-  });
+async function executeCommand(command: string, label: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if(!command) {
+      console.warn(`Skipping ${label}, no command specified.`)
+      return;
+    }
+    console.log(chalk.blue(`Running ${label} command...`));
+    const commandParts: Array<string> = command.split(" ") as string[];
+    const cmd: ChildProcess = spawn(commandParts[0], commandParts.slice(1), {
+      stdio: "inherit",
+      detached: false,
+    });
 
-  cmd.on("error", (err) => {
-    console.error(
-      chalk.red(`Error executing ${label} command: ${err.message}`)
-    );
-  });
+    cmd.on("error", (err) => {
+      console.error(
+        chalk.red(`Error executing ${label} command: ${err.message}`)
+      );
+      reject(err);
+    });
 
-  cmd.on("exit", (code) => {
-    console.log(
-      chalk.green(`${label} command completed with exit code ${code}`)
-    );
-    process.exit(code ?? 1);
-  });
+    cmd.on("exit", (code) => {
+      if (code !== 0) {
+        console.error(chalk.red(`${label} command failed with exit code ${code}`));
+        reject(new Error(`${label} command failed`));
+      } else {
+        console.log(chalk.green(`${label} command completed with exit code ${code}`));
+        resolve();
+      }
+    });
 
-  process.on("SIGINT", () => {
-    console.log(chalk.yellow("\n Caught SIGINT. Stopping process..."));
-    cmd.kill("SIGINT");
-  });
+    process.on("SIGINT", () => {
+      console.log(chalk.yellow("\n Caught SIGINT. Stopping process..."));
+      cmd.kill("SIGINT");
+      reject(new Error("SIGINT received"));
+    });
 
-  process.on("SIGTERM", () => {
-    console.log(chalk.yellow("\n Caught SIGTERM. Stopping process..."));
-    cmd.kill("SIGTERM");
+    process.on("SIGTERM", () => {
+      console.log(chalk.yellow("\n Caught SIGTERM. Stopping process..."));
+      cmd.kill("SIGTERM");
+      reject(new Error("SIGTERM received"));
+    });
   });
 }
 
-export function runWorkspaceWithSkip(
+export async function runWorkspaceSequentially(
+  dirPath: string,
+  skippedDirectories: Set<string>,
+  modes: Array<RunMode>
+): Promise<void> {
+  for (const mode of modes) {
+    console.log(chalk.blue(`Executing mode: ${mode}`));
+    await runWorkspaceWithSkip(dirPath, skippedDirectories, mode);
+  }
+}
+
+export async function runWorkspaceWithSkip(
   dirPath: string,
   skippedDirectories: Set<string>,
   mode: RunMode
-): void {
+): Promise<void> {
   const directoryName: string = path.basename(dirPath);
   if (skippedDirectories.has(directoryName)) {
     console.warn(`Skipping directory ${dirPath} as specified.`);
     process.exit(0);
   } else {
-    runWorkspace(dirPath, mode);
+    await runWorkspace(dirPath, mode);
   }
 }
 
-export function runWorkspace(dirPath: string, mode: RunMode): void {
+export async function runWorkspace(
+  dirPath: string,
+  mode: RunMode
+): Promise<void> {
   try {
     const directoryName: string = path.basename(dirPath);
     const workspaceConfig: string = findWorkspaceRootConfigFile(dirPath);
@@ -146,10 +175,10 @@ export function runWorkspace(dirPath: string, mode: RunMode): void {
 
     switch (mode) {
       case RUN:
-        executeCommand(config.command, RUN);
+        await executeCommand(config.command, RUN);
         break;
       case CLEAN:
-        executeCommand(config.cleanCommand, CLEAN);
+        await executeCommand(config.cleanCommand, CLEAN);
         break;
       default:
         console.error(chalk.red(`Unexpected mode: ${mode}`));

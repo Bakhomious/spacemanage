@@ -7,10 +7,10 @@ import {
   DIRECTORY_FLAG,
   SKIP,
   USAGE,
-} from "./constants";
+} from "./constants.js";
 import path from "path";
 import chalk from "chalk";
-import { modePriority } from "./types";
+import { modePriority } from "./types.js";
 
 export const handleExit = () => {
   console.info("Exiting gracefully.");
@@ -58,7 +58,7 @@ export function normalizePath(dirPath: string): string {
 export function getDirectoryPathFromFlag(args: string[]): string {
   const dirIndex = args.indexOf(DIRECTORY_FLAG);
   if (dirIndex !== -1 && dirIndex + 1 < args.length) {
-    return args[dirIndex + 1];
+    return args[dirIndex + 1] as string;
   } else {
     return process.cwd();
   }
@@ -81,7 +81,7 @@ export function determineModes(args: string[]): Array<string> {
     .map((arg, index) => (modePriority.includes(arg) ? index : -1))
     .filter((index) => index !== -1);
 
-  const modes: Set<string> = new Set(modeIndexes.map((index) => args[index]));
+  const modes: Set<string> = new Set(modeIndexes.map((index) => args[index])) as Set<string>;
   const modesToRun: Array<string> = Array.from(modes).sort(
     (a, b) => modePriority.indexOf(a) - modePriority.indexOf(b)
   );

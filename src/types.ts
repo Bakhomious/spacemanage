@@ -1,4 +1,4 @@
-import { RUN, CLEAN, SKIP } from "./constants";
+import { RUN, CLEAN, SKIP } from "./constants.js";
 
 export enum FolderType {
   FRONTEND = "fe",
