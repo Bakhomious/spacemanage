@@ -22,8 +22,14 @@ export type DirectoryConfig = {
   type: FolderType;
 };
 
+export type DockerSettings = {
+  active: boolean;
+  composePath: string;
+}
+
 export type WorkspaceConfig = {
   dirPath: string;
+  docker: DockerSettings;
   directories: Record<string, DirectoryConfig>;
 };
 

@@ -2,7 +2,7 @@
 import process from "process";
 import chalk from "chalk";
 
-import { USAGE, INIT, SKIP } from "./constants.js";
+import { USAGE, INIT, SKIP, EDIT } from "./constants.js";
 import { initWorkspace, runWorkspaceSequentially } from "./commands.js";
 import {
   checkConfigDir,
@@ -35,6 +35,8 @@ async function main(): Promise<void> {
         console.error(chalk.red(`${error}`));
       }
     });
+  } else if (command === EDIT) {
+    console.assert(false, "NOT IMPLEMENTED");
   } else {
     if (modes.length === 0) {
       console.log(USAGE);
