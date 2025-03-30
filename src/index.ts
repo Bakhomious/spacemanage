@@ -3,7 +3,7 @@ import process from "process";
 import chalk from "chalk";
 
 import { USAGE, INIT, SKIP } from "./constants.js";
-import { initWorkspace, runWorkspaceSequentially, runWorkspaceWithSkip } from "./commands.js";
+import { initWorkspace, runWorkspaceSequentially } from "./commands.js";
 import {
   checkConfigDir,
   determineModes,
@@ -11,7 +11,6 @@ import {
   getSkippedDirectories,
   handleExit,
 } from "./utils.js";
-import { RunMode } from "./types.js";
 
 async function main(): Promise<void> {
   checkConfigDir();
