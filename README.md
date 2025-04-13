@@ -85,4 +85,4 @@ spacemanage clean run [--skip directorn-name]
 - [ ] Edit Workspace config mode
 - [ ] Create a bin for easier installation
 - [ ] Migrate to a fancy shell script
-
+- [ ] Nest lifecycles when needed
